@@ -3,7 +3,7 @@
 """
 Created on Thu Nov 28 13:47:04 2019
 
-@author: gennadiigorbun
+@author: shonacw
 """
 from tqdm import tqdm
 from astropy.io import fits
@@ -20,7 +20,7 @@ import warnings
 import pandas as pd
 warnings.filterwarnings("ignore")
 
-path_mos = '/Users/gennadiigorbun/Documents/Imperial/AstroLab/A1_mosaic.fits'
+path_mos = '/Users/shonacw/Documents/Imperial/AstroLab/A1_mosaic.fits'
 mos = fits.open(path_mos)
 #  Header:
 data = mos[0].data
@@ -77,11 +77,7 @@ def points_in_circle_np(radius, x0=0, y0=0, ):
 
 def create_test_image(size=[100, 100], std=20, centre=3421):
     gauss = np.random.normal(loc=centre, size=size, scale=std).astype(int)
-    star_coords = list(points_in_circle_np(20, x0=50, y0=50))
-#    x, y = np.meshgrid(np.arange(45, 55), np.arange(45, 55))
-#    d = np.sqrt(x*x+y*y) 
-#    sigma, mu = 20, 3500 
-#    g = np.exp(-( (d-mu)**2 / ( 2.0 * sigma**2 ) ) )     
+    star_coords = list(points_in_circle_np(20, x0=50, y0=50)) 
     for pt in star_coords:
         gauss[pt[0], pt[1]] = 3500 + random.randint(0, 20)
     return gauss
@@ -89,7 +85,6 @@ def create_test_image(size=[100, 100], std=20, centre=3421):
 
 def clip():
     for n_sig in range(1, 7):
-        # plt.hist(data_flat, bins=400, density=True, range=[3300, 3600])
         df = stats.sigma_clip(data, sigma=n_sig)
         mean_2 = np.mean(df)
         variance_2 = np.var(df)
@@ -299,19 +294,6 @@ def calc_mag(counts):
 def do_the_thing():
     img = premask(data_ma)
     plot_2d(img)
-    # final_img, df = run(img)
-    # plot_2d(final_img)
 
-#plt.figure(1)
-#plt.hist(df, density=True, bins=4000)
-## plt.xlim((min(data_flat), max(data_flat)))
-#
-#mean = np.mean(df)
-#variance = np.var(df)
-#sigma = np.sqrt(variance)
-#x = np.linspace(3300, 3600, 1000)
-#plt.plot(x, norm.pdf(x, mean, sigma))
-#
-#plt.show()
 
 
