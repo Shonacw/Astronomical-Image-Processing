@@ -20,18 +20,7 @@ import warnings
 import pandas as pd
 warnings.filterwarnings("ignore")
 
-path_mos = '/Users/shonacw/Documents/Imperial/AstroLab/A1_mosaic.fits'
-mos = fits.open(path_mos)
-#  Header:
-data = mos[0].data
-mos.close()
-data_ma = ma.masked_array(data)
-
-msk = np.zeros([len(data[0]), len(data)])
-
 def test_1():
-    #img = ma.masked_array(create_test_image())
-    #img = ma.masked_array(data[3840:3853, 2260:2300])
     img = ma.masked_array(data[3820:3873, 2240:2310])
     img = ma.masked_array(data[3800:3900, 2200:2400])
     plot_2d(img)
@@ -59,14 +48,10 @@ def unmaskit(i, j):
     return
 
 
-data_flat = data.flatten()
-mean = np.mean(data_flat)
-variance = np.var(data_flat)
-sigma = np.sqrt(variance)
-print(f'Before clipping: Mean = {mean}, std = {sigma}')
-
-
 def points_in_circle_np(radius, x0=0, y0=0, ):
+    """
+    Obtain coordinates for the pixels around a circle of the given radius from the central point(x0, y0).
+    """
     x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
     y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
     x, y = np.where((x_[:,np.newaxis] - x0)**2 + (y_ - y0)**2 <= radius**2)
@@ -76,6 +61,9 @@ def points_in_circle_np(radius, x0=0, y0=0, ):
 
 
 def create_test_image(size=[100, 100], std=20, centre=3421):
+    """
+    Create a test image of specified size containing a Galaxy-like object with Gaussian brightness distribution.
+    """
     gauss = np.random.normal(loc=centre, size=size, scale=std).astype(int)
     star_coords = list(points_in_circle_np(20, x0=50, y0=50)) 
     for pt in star_coords:
@@ -128,7 +116,6 @@ def extend(centre, data, mean_noise, noise_std):
     pts = list(points_in_circle_np(r, x0=x0, y0=y0))
     r += 1
     pts2 = list(points_in_circle_np(r, x0=x0, y0=y0))
-    #   ;  and 
     diff_pts = list(set(tuple(i) for i in pts2 if within_frame(i[0], i[1], x_m, y_m) and data[i] is not ma.masked) - set(tuple(i) for i in pts if within_frame(i[0], i[1], x_m, y_m) and data[i] is not ma.masked))
     flux_diff = sum([data[i] for i in diff_pts])
     noise_lim = len(diff_pts) * (mean_noise - 5 * noise_std)
@@ -157,13 +144,11 @@ def get_local_noise(centre, data):
             return False
     x0, y0 = centre[0], centre[1]
     aperture = 6
-    #pdb.set_trace()
     pts_in_apt = [data[pt[0], pt[1]] for pt in points_in_circle_np(aperture, x0=x0, y0=y0) if within_frame(pt[0], pt[1]) and data[pt[0], pt[1]] is not ma.masked]
     _df = stats.sigma_clip(pts_in_apt, sigma=5)
     noise_local, noise_local_sigma = np.mean(_df), np.std(_df)
     df = stats.sigma_clip(data, sigma=5)
     av_noise, av_noise_sigma = np.mean(df), np.std(df)
-    #pdb.set_trace()
     while noise_local > av_noise + av_noise_sigma:
         aperture += 3
         pts_in_apt = [data[x, y] for x, y in points_in_circle_np(aperture, x0=x0, y0=y0)]
@@ -172,19 +157,17 @@ def get_local_noise(centre, data):
     return noise_local, noise_local_sigma, aperture
     
 def run(img):
-    res_path = '/Users/gennadiigorbun/Documents/Imperial/AstroLab/catalogue_{}.txt'
+    res_path = '/Users/shonacw/Documents/Imperial/AstroLab/catalogue_{}.txt'
     num_file = 0
     while os.path.exists(res_path.format(num_file)):
         num_file += 1  
     f = open(res_path.format(num_file), 'w')
-    #img = ma.masked_array(data[3000:3500, 2000:2400])
     plot_2d(img)
     
     df = stats.sigma_clip(img, sigma=5)
     noise_local = np.mean(df)
     sigma_noise = np.std(df)
     
-    #pdb.set_trace()
     centre = find_max_pxl(img)
     noise_local, sigma_noise, apt = get_local_noise(centre, img)
     points_to_mask, r_star, flux_star = extend(centre, img, noise_local, sigma_noise)
@@ -201,9 +184,6 @@ def run(img):
         noise_local, sigma_noise, apt = get_local_noise(centre, img)
         points_to_mask, r_star, flux_star = extend(centre, img, noise_local, sigma_noise)
         noise_flux = len([i for i in points_to_mask if img[i] is not ma.masked]) * (noise_local + 2 * sigma_noise)
-#        df = stats.sigma_clip(img, sigma=5)
-#        noise_local = np.mean(df)
-#        sigma_noise = np.std(df)
     plot_2d(img)
     f.close()
     df = pd.read_csv(res_path.format(num_file), sep='\t', header=None)
@@ -211,7 +191,7 @@ def run(img):
 
 
 def find_approx_bound():
-    # img = ma.masked_array(data[3840:3853, 2260:2300])
+
     img = ma.masked_array(data[3820:3873, 2240:2310])
     plot_2d(img)
     centre = find_max_pxl(img)
@@ -294,6 +274,25 @@ def calc_mag(counts):
 def do_the_thing():
     img = premask(data_ma)
     plot_2d(img)
+    
+if __name__=='__main__':
+
+    path_mos = '/Users/shonacw/Documents/Imperial/AstroLab/A1_mosaic.fits'
+    mos = fits.open(path_mos)
+    #  Header:
+    data = mos[0].data
+    mos.close()
+    data_ma = ma.masked_array(data)
+    
+    msk = np.zeros([len(data[0]), len(data)])
+    
+    
+    
+    data_flat = data.flatten()
+    mean = np.mean(data_flat)
+    variance = np.var(data_flat)
+    sigma = np.sqrt(variance)
+    print(f'Before clipping: Mean = {mean}, std = {sigma}')
 
 
 
